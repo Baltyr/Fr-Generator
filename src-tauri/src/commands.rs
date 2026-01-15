@@ -1,6 +1,5 @@
 use std::fs;
 use std::path::Path;
-use tauri::api::dialog;
 
 /// Crea un directorio (y subdirectorios si es necesario)
 #[tauri::command]
@@ -65,25 +64,4 @@ pub fn open_folder(path: String) -> Result<(), String> {
     }
 
     Ok(())
-}
-
-/// Muestra un diálogo para seleccionar un archivo
-#[tauri::command]
-pub async fn select_file(filters: Vec<(String, Vec<String>)>) -> Result<Option<String>, String> {
-    let file_path = dialog::FileDialogBuilder::new()
-        .set_title("Seleccionar archivo")
-        .add_filter("Todos los archivos", &["*"])
-        .pick_file();
-
-    Ok(file_path.map(|p| p.to_string_lossy().to_string()))
-}
-
-/// Muestra un diálogo para seleccionar una carpeta
-#[tauri::command]
-pub async fn select_folder() -> Result<Option<String>, String> {
-    let folder_path = dialog::FileDialogBuilder::new()
-        .set_title("Seleccionar carpeta")
-        .pick_folder();
-
-    Ok(folder_path.map(|p| p.to_string_lossy().to_string()))
 }

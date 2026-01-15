@@ -37,4 +37,18 @@ export default defineConfig({
     minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
     sourcemap: !!process.env.TAURI_DEBUG,
   },
+
+  // Fix para el error de crypto.getRandomValues
+  define: {
+    'process.env': {},
+    global: 'globalThis',
+  },
+
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
 });

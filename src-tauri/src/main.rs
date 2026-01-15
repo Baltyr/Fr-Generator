@@ -5,7 +5,7 @@ mod commands;
 
 use commands::{
     create_directory, copy_file, write_file, read_file,
-    file_exists, open_folder, select_file, select_folder
+    file_exists, open_folder
 };
 
 fn main() {
@@ -16,9 +16,7 @@ fn main() {
             write_file,
             read_file,
             file_exists,
-            open_folder,
-            select_file,
-            select_folder
+            open_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
