@@ -1,30 +1,34 @@
-# FR Generator
+# 🚀 FR Generator
 
-Aplicación de escritorio para generar automáticamente archivos FR (FBD, FDA, PU) para solicitudes de pases a QA y Producción en Jira.
+Generador automático de archivos FR (FBD, FDA, PU) para solicitudes de pase en Jira.
 
-## 🚀 Características
+## 📋 Características
 
-- **100% Portable**: Ejecutable único sin necesidad de instalación
-- **Basado en Templates**: Los usuarios cargan sus propias plantillas FR para preservar el formato exacto
-- **Memoria de Campos**: Auto-completa datos usados frecuentemente
-- **Funciona Offline**: No requiere internet después de la configuración inicial
-- **Multi-ambiente**: Genera FRs para QA y Producción
+- ✅ **100% Portable**: Aplicación de escritorio sin dependencias externas
+- ✅ **Template-Based**: Usa tus propias plantillas Excel/Word preservando formato
+- ✅ **Auto-completado**: Recuerda y rellena automáticamente datos frecuentes
+- ✅ **Offline-First**: Funciona completamente sin internet
+- ✅ **Multi-ambiente**: Genera archivos para QA y Producción
+- ✅ **Dark Theme**: Interfaz moderna y profesional
+- ✅ **Auto-guardado**: Progreso guardado automáticamente
 
 ## 🛠️ Stack Tecnológico
 
 - **Frontend**: React 18 + TypeScript + TailwindCSS
+- **Desktop**: Tauri (Rust)
 - **State Management**: Zustand
-- **File Processing**: SheetJS (Excel) + docx.js (Word)
-- **Desktop Framework**: Tauri
+- **Storage**: IndexedDB (localforage)
 - **Build Tool**: Vite
+- **Peso**: ~10-15MB (vs ~150MB de Electron)
 
-## 📋 Prerequisitos
+## 📦 Instalación
+
+### Requisitos Previos
 
 - Node.js 18+
-- Rust (para Tauri)
-- npm o yarn
+- Rust (para desarrollo)
 
-## 🔧 Instalación para Desarrollo
+### Desarrollo
 
 ```bash
 # Instalar dependencias
@@ -33,45 +37,123 @@ npm install
 # Ejecutar en modo desarrollo
 npm run tauri:dev
 
-# Compilar para producción
+# Build para producción
 npm run tauri:build
 ```
 
-## 📦 Estructura del Proyecto
+## 🎯 Uso
+
+### Primera Ejecución
+
+1. **Setup Wizard** aparecerá automáticamente
+2. **Carga tus templates** (FBD Excel, FDA Excel, PU Word)
+3. **Configura tus datos** (nombre, área, etc.)
+4. ¡Listo para generar FRs!
+
+### Crear un FR
+
+1. Click en **"➕ Nuevo FR"**
+2. **Step 1**: Información básica (CDPSP, título, descripción)
+3. **Step 2**: FBD - Scripts SQL y Stored Procedures (opcional)
+4. **Step 3**: FDA - Archivos modificados (opcional)
+5. **Step 4**: PU - Casos de prueba (opcional)
+6. **Step 5**: Resumen y generación
+
+### Configuración
+
+- **Templates**: Cargar/actualizar plantillas Excel y Word
+- **Datos del Usuario**: Configurar valores por defecto
+- **Recordar**: Marca campos para auto-completado
+
+## 📁 Estructura del Proyecto
 
 ```
-fr-generator/
-├── src/                    # Código fuente React
-│   ├── components/         # Componentes de UI
-│   ├── hooks/             # React hooks personalizados
-│   ├── services/          # Servicios (Excel, Word, Storage)
-│   ├── stores/            # Zustand stores
-│   ├── types/             # Definiciones de TypeScript
-│   ├── utils/             # Utilidades
-│   └── styles/            # Estilos globales
-├── src-tauri/             # Código Rust de Tauri
-└── public/                # Archivos estáticos
+Fr-Generator/
+├── src/
+│   ├── components/
+│   │   ├── ui/              # Componentes reutilizables
+│   │   ├── settings/        # Configuración y templates
+│   │   └── wizard/          # Wizard de 5 pasos
+│   ├── services/            # Servicios (storage, etc.)
+│   ├── stores/              # Zustand stores
+│   ├── styles/              # CSS global y tema
+│   └── types/               # TypeScript definitions
+├── src-tauri/               # Backend Rust
+│   ├── src/
+│   │   ├── commands.rs      # Comandos Tauri
+│   │   └── main.rs
+│   └── tauri.conf.json      # Configuración Tauri
+└── package.json
 ```
 
-## 📖 Uso
+## 🎨 Sistema de Notificaciones
 
-1. **Primera Ejecución**: La aplicación te guiará para cargar tus templates (FBD, FDA, PU)
-2. **Configuración**: Configura tus datos por defecto (nombre, área, servidores)
-3. **Generar FR**: Usa el wizard para crear tus FRs paso a paso
-4. **Resultado**: Los archivos se generan preservando el formato de tus templates
+```typescript
+import { toast } from '@/stores/toastStore';
 
-## 🎨 Características de la UI
+// Uso
+toast.success('Título', 'Mensaje opcional');
+toast.error('Error', 'Detalles del error');
+toast.warning('Advertencia', 'Información importante');
+toast.info('Info', 'Nota informativa', 6000);
+```
 
-- Tema oscuro moderno
-- Wizard paso a paso intuitivo
-- Validaciones en tiempo real
-- Historial de FRs generadas
-- Export/Import de configuración
+## 🔧 Configuración Avanzada
+
+### Templates
+
+Los templates se almacenan en IndexedDB como Base64. La aplicación:
+- Preserva todo el formato original
+- Solo modifica valores de celdas/campos específicos
+- Soporta `.xlsx`, `.xls` para Excel y `.docx` para Word
+
+### Almacenamiento
+
+- **IndexedDB**: Templates, configuración, historial
+- **localStorage**: Progreso del wizard
+- **Todo offline**: Sin necesidad de servidor
+
+## 📊 Progreso del Proyecto
+
+**Estado actual: ~80% completado**
+
+### ✅ Completado
+- [x] Infraestructura base (Tauri + React + TypeScript)
+- [x] Componentes UI completos (8 componentes)
+- [x] Sistema de storage (IndexedDB)
+- [x] Stores de estado (Config, Wizard, Toast)
+- [x] Wizard completo (5 pasos)
+- [x] Sistema de configuración
+- [x] First-run setup wizard
+- [x] Sistema de notificaciones toast
+- [x] Auto-guardado y validación
+- [x] Dark theme
+
+### ⏳ Pendiente
+- [ ] Servicio de generación Excel (FBD, FDA)
+- [ ] Servicio de generación Word (PU)
+- [ ] Página de historial
+- [ ] Export/Import configuración
+- [ ] Testing completo
+- [ ] Build del ejecutable Windows
+
+## 🤝 Contribución
+
+Este es un proyecto interno. Para sugerencias o bugs, contacta al equipo de desarrollo.
 
 ## 📝 Licencia
 
-Privado - Bupa Seguros
+Uso interno - Todos los derechos reservados.
 
-## 👤 Autor
+## 🔗 Links Útiles
 
-Allan Bascur - Bupaverse Team
+- [Tauri Docs](https://tauri.app/)
+- [React Docs](https://react.dev/)
+- [Zustand](https://github.com/pmndrs/zustand)
+- [TailwindCSS](https://tailwindcss.com/)
+
+---
+
+**Versión**: 1.0.0
+**Última actualización**: 2026-01-15
+**Desarrollado con**: Claude Sonnet 4.5 🤖

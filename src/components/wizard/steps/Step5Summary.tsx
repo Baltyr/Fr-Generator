@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWizardStore } from '@/stores/wizardStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { toast } from '@/stores/toastStore';
 
 export const Step5Summary: React.FC = () => {
   const { formData } = useWizardStore();
@@ -12,10 +13,14 @@ export const Step5Summary: React.FC = () => {
     try {
       // TODO: Implement file generation
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate
-      alert('✅ Archivos FR generados exitosamente!\n\nEsta funcionalidad se implementará próximamente.');
+      toast.info(
+        'Funcionalidad en desarrollo',
+        'La generación de archivos se implementará próximamente',
+        6000
+      );
     } catch (error) {
       console.error('Error al generar archivos:', error);
-      alert('❌ Error al generar archivos FR');
+      toast.error('Error al generar archivos', 'Ocurrió un error inesperado');
     } finally {
       setIsGenerating(false);
     }

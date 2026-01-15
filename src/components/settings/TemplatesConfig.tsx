@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { toast } from '@/stores/toastStore';
 
 type TemplateType = 'FBD' | 'FDA' | 'PU';
 
@@ -72,10 +73,10 @@ export const TemplatesConfig: React.FC = () => {
     try {
       await saveTemplate(type, file);
       setTemplateStates(prev => ({ ...prev, [type]: true }));
-      alert(`✅ Template ${type} guardado exitosamente`);
+      toast.success(`Template ${type} guardado`, `El archivo ${file.name} se guardó correctamente`);
     } catch (error) {
       console.error(`Error al guardar template ${type}:`, error);
-      alert(`❌ Error al guardar template ${type}`);
+      toast.error(`Error al guardar template ${type}`, 'Intenta nuevamente o verifica el archivo');
     } finally {
       setUploadingTemplate(null);
     }
@@ -92,10 +93,10 @@ export const TemplatesConfig: React.FC = () => {
     try {
       await deleteTemplate(templateToDelete);
       setTemplateStates(prev => ({ ...prev, [templateToDelete]: false }));
-      alert(`✅ Template ${templateToDelete} eliminado exitosamente`);
+      toast.success(`Template ${templateToDelete} eliminado`, 'El template se eliminó correctamente');
     } catch (error) {
       console.error(`Error al eliminar template ${templateToDelete}:`, error);
-      alert(`❌ Error al eliminar template ${templateToDelete}`);
+      toast.error(`Error al eliminar template ${templateToDelete}`, 'Intenta nuevamente');
     } finally {
       setDeleteModalOpen(false);
       setTemplateToDelete(null);

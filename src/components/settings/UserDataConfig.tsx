@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { ConfiguracionGuardada } from '@/types';
+import { toast } from '@/stores/toastStore';
 
 export const UserDataConfig: React.FC = () => {
   const { config, updateConfig } = useConfigStore();
@@ -47,10 +48,10 @@ export const UserDataConfig: React.FC = () => {
     setIsSaving(true);
     try {
       await updateConfig(formData as Partial<ConfiguracionGuardada>);
-      alert('✅ Configuración guardada exitosamente');
+      toast.success('Configuración guardada', 'Tus datos se guardaron correctamente');
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      alert('❌ Error al guardar configuración');
+      toast.error('Error al guardar', 'No se pudo guardar la configuración');
     } finally {
       setIsSaving(false);
     }

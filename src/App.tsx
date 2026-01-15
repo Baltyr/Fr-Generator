@@ -4,6 +4,7 @@ import { FirstRunSetup } from '@/components/settings/FirstRunSetup';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 import { FRWizard } from '@/components/wizard/FRWizard';
 import { Button } from '@/components/ui/Button';
+import { ToastContainer } from '@/components/ui/Toast';
 
 type AppPage = 'home' | 'settings' | 'wizard' | 'history';
 
@@ -163,6 +164,9 @@ function App() {
           setCurrentPage('home');
         }}
       />
+
+      {/* Toast Container */}
+      <ToastContainer />
     </>
   );
 }
