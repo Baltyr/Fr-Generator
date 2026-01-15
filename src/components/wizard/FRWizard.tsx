@@ -2,6 +2,10 @@ import React from 'react';
 import { useWizardStore } from '@/stores/wizardStore';
 import { WizardLayout } from './WizardLayout';
 import { Step1BasicInfo } from './steps/Step1BasicInfo';
+import { Step2FBD } from './steps/Step2FBD';
+import { Step3FDA } from './steps/Step3FDA';
+import { Step4PU } from './steps/Step4PU';
+import { Step5Summary } from './steps/Step5Summary';
 
 interface FRWizardProps {
   onClose: () => void;
@@ -15,29 +19,13 @@ export const FRWizard: React.FC<FRWizardProps> = ({ onClose }) => {
       case 1:
         return <Step1BasicInfo />;
       case 2:
-        return (
-          <div className="text-center py-12">
-            <p className="text-text-muted">FBD Configuration - Próximamente...</p>
-          </div>
-        );
+        return <Step2FBD />;
       case 3:
-        return (
-          <div className="text-center py-12">
-            <p className="text-text-muted">FDA Configuration - Próximamente...</p>
-          </div>
-        );
+        return <Step3FDA />;
       case 4:
-        return (
-          <div className="text-center py-12">
-            <p className="text-text-muted">PU Configuration - Próximamente...</p>
-          </div>
-        );
+        return <Step4PU />;
       case 5:
-        return (
-          <div className="text-center py-12">
-            <p className="text-text-muted">Resumen y Generación - Próximamente...</p>
-          </div>
-        );
+        return <Step5Summary />;
       default:
         return <Step1BasicInfo />;
     }

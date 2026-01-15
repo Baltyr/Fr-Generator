@@ -201,15 +201,16 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         );
 
       case 2: // FBD
-        if (!formData.tiposFR.includes('FBD')) return true;
-        return formData.fbd !== null;
+        // FBD siempre es opcional, se puede saltar
+        return true;
 
       case 3: // FDA
-        if (!formData.tiposFR.includes('FDA')) return true;
-        return formData.fda !== null;
+        // FDA siempre es opcional, se puede saltar
+        return true;
 
       case 4: // PU
-        return formData.pu !== null;
+        // PU siempre es opcional, se puede saltar
+        return true;
 
       case 5: // Resumen
         return true;
