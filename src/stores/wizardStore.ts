@@ -1,16 +1,21 @@
 import { create } from 'zustand';
 import { Ambiente, TipoFR, FBDData, FDAData, PUData } from '@/types';
 
+interface BasicInfo {
+  cdpsp: string;
+  titulo: string;
+  descripcion: string;
+  solicitante: string;
+  area: string;
+  telefono: string;
+  ambientes: Ambiente[];
+  fechaSolicitud: string;
+}
+
 interface WizardFormData {
   // Paso 1: Información básica
-  cdpsp: string;
-  ambientes: Ambiente[];
+  basicInfo: BasicInfo | null;
   tiposFR: TipoFR[];
-  solicitante: {
-    nombre: string;
-    area: string;
-    telefono: string;
-  };
 
   // Paso 2: FBD (opcional)
   fbd: FBDData | null;
@@ -33,10 +38,12 @@ interface WizardState {
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: number) => void;
+  canGoBack: () => boolean;
+  canGoNext: () => boolean;
 
   // Acciones de datos
   updateFormData: (data: Partial<WizardFormData>) => void;
-  updateBasicInfo: (data: Partial<WizardFormData>) => void;
+  updateBasicInfo: (data: Partial<BasicInfo>) => void;
   updateFBD: (data: Partial<FBDData> | null) => void;
   updateFDA: (data: Partial<FDAData> | null) => void;
   updatePU: (data: Partial<PUData> | null) => void;
@@ -45,6 +52,7 @@ interface WizardState {
   canProceed: (step: number) => boolean;
   getStepTitle: (step: number) => string;
   getTotalSteps: () => number;
+  reset: () => void;
   resetWizard: () => void;
 
   // Persistencia
@@ -53,14 +61,8 @@ interface WizardState {
 }
 
 const INITIAL_FORM_DATA: WizardFormData = {
-  cdpsp: '',
-  ambientes: [],
+  basicInfo: null,
   tiposFR: [],
-  solicitante: {
-    nombre: '',
-    area: '',
-    telefono: '',
-  },
   fbd: null,
   fda: null,
   pu: null,
@@ -120,14 +122,32 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   // Actualizar información básica
-  updateBasicInfo: (data: Partial<WizardFormData>) => {
+  updateBasicInfo: (data: Partial<BasicInfo>) => {
     set(state => ({
       formData: {
         ...state.formData,
-        ...data,
+        basicInfo: state.formData.basicInfo
+          ? { ...state.formData.basicInfo, ...data }
+          : data as BasicInfo,
       },
     }));
     get().saveProgress();
+  },
+
+  // Verificar si se puede ir atrás
+  canGoBack: () => {
+    return get().currentStep > 1;
+  },
+
+  // Verificar si se puede ir adelante
+  canGoNext: () => {
+    const { currentStep, canProceed } = get();
+    return canProceed(currentStep);
+  },
+
+  // Reset (alias de resetWizard)
+  reset: () => {
+    get().resetWizard();
   },
 
   // Actualizar FBD
@@ -169,12 +189,15 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
     switch (step) {
       case 1: // Información básica
+        if (!formData.basicInfo) return false;
+        const info = formData.basicInfo;
         return !!(
-          formData.cdpsp &&
-          formData.ambientes.length > 0 &&
-          formData.tiposFR.length > 0 &&
-          formData.solicitante.nombre &&
-          formData.solicitante.area
+          info.cdpsp &&
+          info.titulo &&
+          info.descripcion &&
+          info.solicitante &&
+          info.area &&
+          info.ambientes.length > 0
         );
 
       case 2: // FBD

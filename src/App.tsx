@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useConfigStore } from '@/stores/configStore';
 import { FirstRunSetup } from '@/components/settings/FirstRunSetup';
 import { SettingsPage } from '@/components/settings/SettingsPage';
+import { FRWizard } from '@/components/wizard/FRWizard';
 import { Button } from '@/components/ui/Button';
 
 type AppPage = 'home' | 'settings' | 'wizard' | 'history';
@@ -30,6 +31,11 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  // Show Wizard page
+  if (currentPage === 'wizard') {
+    return <FRWizard onClose={() => setCurrentPage('home')} />;
   }
 
   // Show Settings page
@@ -68,7 +74,6 @@ function App() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentPage('wizard')}
-                disabled
               >
                 ➕ Nuevo FR
               </Button>
@@ -127,10 +132,9 @@ function App() {
                 variant="primary"
                 size="lg"
                 onClick={() => setCurrentPage('wizard')}
-                disabled
                 className="w-full"
               >
-                ➕ Crear nuevo FR (Próximamente)
+                ➕ Crear nuevo FR
               </Button>
               <Button
                 variant="secondary"
