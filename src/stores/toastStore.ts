@@ -33,7 +33,7 @@ export const useToastStore = create<ToastState>((set) => ({
     }));
 
     // Auto-remove after duration
-    if (newToast.duration > 0) {
+    if (newToast.duration && newToast.duration > 0) {
       setTimeout(() => {
         set((state) => ({
           toasts: state.toasts.filter((t) => t.id !== id),

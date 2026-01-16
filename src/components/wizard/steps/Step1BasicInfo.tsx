@@ -3,7 +3,6 @@ import { useWizardStore } from '@/stores/wizardStore';
 import { useConfigStore } from '@/stores/configStore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Checkbox } from '@/components/ui/Checkbox';
 
 export const Step1BasicInfo: React.FC = () => {

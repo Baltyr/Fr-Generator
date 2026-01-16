@@ -28,19 +28,23 @@ export interface PlanFallback {
  * Script SQL para ejecutar
  */
 export interface ScriptSQL {
+  id: string;
   orden: number;
   nombre: string;
-  archivoPath: string;
-  observaciones: string;
+  tipo: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'CREATE' | 'ALTER' | 'DROP' | 'OTROS';
+  descripcion: string;
+  sql: string;
 }
 
 /**
  * Stored Procedure para compilar
  */
 export interface StoredProcedure {
-  numero: number;
-  rutaGitLab: string;
-  observaciones: string;
+  id: string;
+  orden: number;
+  nombre: string;
+  descripcion: string;
+  parametros: string[];
 }
 
 /**
@@ -104,37 +108,26 @@ export interface InscripcionPortal {
  * Datos completos del FBD
  */
 export interface FBDData {
-  servidorTipo: string;
   baseDatos: string;
-  dependeDeOtraFR: boolean;
-  numeroFRDependencia?: number;
-
-  operaciones: {
-    ejecucion: boolean;
-    compilacion: boolean;
-    tablas: boolean;
-    otrosObjetos: boolean;
-    traspasoDatos: boolean;
-    cuentasPermisos: boolean;
-    creacionRoles: boolean;
-    inscripcionPortal: boolean;
-    planFallback: boolean;
-  };
-
-  scripts?: ScriptSQL[];
-  storedProcedures?: StoredProcedure[];
-  tablas?: TablaModificacion[];
-  otrosObjetos?: OtroObjetoBD[];
-  traspasoDatos?: TraspasoDatos;
-  cuentasPermisos?: CuentaPermiso[];
-  roles?: RolCreacion[];
-  inscripcionPortal?: InscripcionPortal[];
-  planFallback?: PlanFallback;
+  esquema: string;
+  scripts: ScriptSQL[];
+  storedProcedures: StoredProcedure[];
+  observaciones: string;
 }
 
 // ============================================
 // FDA (Formulario Despliegue Aplicaciones)
 // ============================================
+
+/**
+ * Archivo modificado en el FDA
+ */
+export interface ArchivoModificado {
+  id: string;
+  ruta: string;
+  tipo: 'Nuevo' | 'Modificado' | 'Eliminado';
+  descripcion: string;
+}
 
 /**
  * Tipos de despliegue disponibles
@@ -241,25 +234,29 @@ export interface GitLabAzureDeployment {
  * Datos completos del FDA
  */
 export interface FDAData {
-  tipoDespliegue: TipoDespliegue;
-  dependeDeOtraFR: boolean;
-  numeroFRDependencia?: number;
+  componente: string;
+  urlRepositorio: string;
+  branch: string;
+  archivos: ArchivoModificado[];
   observaciones: string;
-
-  // Type-specific data
-  gitlabAzure?: GitLabAzureDeployment;
-  legacy?: LegacyDeployment;
-  netSitios?: NetSitiosDeployment;
-  netWS?: NetWSDeployment;
-  apiTyk?: APITYKDeployment;
-  apiKong?: APIKONGDeployment;
-
-  planFallback?: PlanFallback;
 }
 
 // ============================================
 // PU (Pruebas Unitarias)
 // ============================================
+
+/**
+ * Caso de prueba
+ */
+export interface CasoPrueba {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  precondiciones: string;
+  pasos: string[];
+  resultadoEsperado: string;
+  estado: 'Pendiente' | 'En Progreso' | 'Aprobado' | 'Rechazado';
+}
 
 /**
  * Evidencia de prueba (imagen)
@@ -275,17 +272,11 @@ export interface EvidenciaImagen {
  * Datos completos del PU
  */
 export interface PUData {
-  casoPrueba: string;
-  descripcion: string;
-  responsables: string;
   tipoPrueba: string;
-  estado: 'Exitosa' | 'Fallida' | 'Pendiente';
-  numeroEjecucion: number;
-  fechaPlanificada: Date;
-  fechaEjecucion: Date;
   ejecutor: string;
-  resultado: 'OK' | 'FAIL';
-  evidencias: EvidenciaImagen[];
+  herramienta: string;
+  casos: CasoPrueba[];
+  observaciones: string;
 }
 
 // ============================================

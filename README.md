@@ -115,7 +115,7 @@ Los templates se almacenan en IndexedDB como Base64. La aplicación:
 
 ## 📊 Progreso del Proyecto
 
-**Estado actual: ~80% completado**
+**Estado actual: ~90% completado**
 
 ### ✅ Completado
 - [x] Infraestructura base (Tauri + React + TypeScript)
@@ -128,10 +128,11 @@ Los templates se almacenan en IndexedDB como Base64. La aplicación:
 - [x] Sistema de notificaciones toast
 - [x] Auto-guardado y validación
 - [x] Dark theme
+- [x] **Servicio de generación Excel (FBD, FDA)**
+- [x] **Servicio de generación Word (PU)**
+- [x] **Generación completa de archivos**
 
 ### ⏳ Pendiente
-- [ ] Servicio de generación Excel (FBD, FDA)
-- [ ] Servicio de generación Word (PU)
 - [ ] Página de historial
 - [ ] Export/Import configuración
 - [ ] Testing completo

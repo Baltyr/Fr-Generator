@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useToastStore, Toast as ToastType } from '@/stores/toastStore';
 
 const ToastItem: React.FC<{ toast: ToastType }> = ({ toast }) => {

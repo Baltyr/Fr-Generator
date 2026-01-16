@@ -160,9 +160,12 @@ export class StorageService {
       });
 
       // Actualizar configuración
+      const currentConfig = await this.getConfig();
       await this.updateConfig({
         templates: {
-          ...(await this.getConfig())?.templates,
+          fbd: currentConfig?.templates?.fbd || null,
+          fda: currentConfig?.templates?.fda || null,
+          pu: currentConfig?.templates?.pu || null,
           [type.toLowerCase()]: file.name,
         },
       });
@@ -209,9 +212,12 @@ export class StorageService {
     await localforage.removeItem(STORAGE_KEYS.TEMPLATES[type]);
 
     // Actualizar configuración
+    const currentConfig = await this.getConfig();
     await this.updateConfig({
       templates: {
-        ...(await this.getConfig())?.templates,
+        fbd: currentConfig?.templates?.fbd || null,
+        fda: currentConfig?.templates?.fda || null,
+        pu: currentConfig?.templates?.pu || null,
         [type.toLowerCase()]: null,
       },
     });

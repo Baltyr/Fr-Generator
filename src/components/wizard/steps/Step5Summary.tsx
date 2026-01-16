@@ -1,26 +1,116 @@
 import React, { useState } from 'react';
 import { useWizardStore } from '@/stores/wizardStore';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/stores/toastStore';
+import { excelService } from '@/services/excelService';
+import { wordService } from '@/services/wordService';
+import { saveAs } from 'file-saver';
 
 export const Step5Summary: React.FC = () => {
   const { formData } = useWizardStore();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async () => {
+    if (!formData.basicInfo) {
+      toast.error('Error', 'No hay información básica para generar');
+      return;
+    }
+
     setIsGenerating(true);
+    const filesGenerated: string[] = [];
+
     try {
-      // TODO: Implement file generation
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate
-      toast.info(
-        'Funcionalidad en desarrollo',
-        'La generación de archivos se implementará próximamente',
-        6000
-      );
+      const { basicInfo, fbd, fda, pu } = formData;
+      const cdpsp = basicInfo.cdpsp;
+
+      // Generar archivos para cada ambiente seleccionado
+      for (const ambiente of basicInfo.ambientes) {
+        const ambienteCode = ambiente === 'QA' ? 'QA' : 'PRD';
+
+        // Generar FBD si tiene datos
+        if (fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0)) {
+          try {
+            const fbdBlob = await excelService.generateFBD(
+              fbd,
+              ambiente,
+              cdpsp,
+              basicInfo
+            );
+            const filename = `FR_${cdpsp}_FBD_${ambienteCode}.xlsx`;
+            saveAs(fbdBlob, filename);
+            filesGenerated.push(filename);
+          } catch (error) {
+            console.error('Error generando FBD:', error);
+            toast.error(
+              `Error al generar FBD ${ambiente}`,
+              error instanceof Error ? error.message : 'Error desconocido'
+            );
+          }
+        }
+
+        // Generar FDA si tiene datos
+        if (fda && fda.archivos?.length > 0) {
+          try {
+            const fdaBlob = await excelService.generateFDA(
+              fda,
+              ambiente,
+              cdpsp,
+              basicInfo
+            );
+            const filename = `FR_${cdpsp}_FDA_${ambienteCode}.xlsx`;
+            saveAs(fdaBlob, filename);
+            filesGenerated.push(filename);
+          } catch (error) {
+            console.error('Error generando FDA:', error);
+            toast.error(
+              `Error al generar FDA ${ambiente}`,
+              error instanceof Error ? error.message : 'Error desconocido'
+            );
+          }
+        }
+
+        // Generar PU si tiene datos
+        if (pu && pu.casos?.length > 0) {
+          try {
+            const puBlob = await wordService.generatePU(
+              pu,
+              ambiente,
+              cdpsp,
+              basicInfo
+            );
+            const filename = `${cdpsp}_PU_${ambienteCode}.docx`;
+            saveAs(puBlob, filename);
+            filesGenerated.push(filename);
+          } catch (error) {
+            console.error('Error generando PU:', error);
+            toast.error(
+              `Error al generar PU ${ambiente}`,
+              error instanceof Error ? error.message : 'Error desconocido'
+            );
+          }
+        }
+      }
+
+      // Mostrar resultado
+      if (filesGenerated.length > 0) {
+        toast.success(
+          `¡Archivos generados! (${filesGenerated.length})`,
+          `Se descargaron: ${filesGenerated.join(', ')}`,
+          8000
+        );
+      } else {
+        toast.warning(
+          'No se generaron archivos',
+          'Asegúrate de haber completado al menos una sección (FBD, FDA o PU)'
+        );
+      }
     } catch (error) {
       console.error('Error al generar archivos:', error);
-      toast.error('Error al generar archivos', 'Ocurrió un error inesperado');
+      toast.error(
+        'Error al generar archivos',
+        error instanceof Error ? error.message : 'Ocurrió un error inesperado'
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -266,6 +356,7 @@ export const Step5Summary: React.FC = () => {
             </h3>
             <p className="text-sm text-text-secondary">
               Se generarán los archivos Excel (FBD, FDA) y Word (PU) con la información ingresada.
+              Los archivos se descargarán automáticamente en tu carpeta de Descargas.
             </p>
           </div>
           <Button
@@ -286,13 +377,20 @@ export const Step5Summary: React.FC = () => {
           <span className="text-2xl">💡</span>
           <div>
             <h3 className="text-sm font-semibold text-text-primary mb-1">
-              Próximamente: Generación de archivos
+              Archivos que se generarán
             </h3>
-            <p className="text-sm text-text-secondary">
-              La funcionalidad de generación de archivos Excel y Word se implementará
-              en las próximas fases del proyecto. Por ahora puedes revisar el resumen
-              y validar que toda la información esté correcta.
-            </p>
+            <ul className="text-sm text-text-secondary list-disc list-inside space-y-1">
+              {basicInfo?.ambientes.map(ambiente => {
+                const ambCode = ambiente === 'QA' ? 'QA' : 'PRD';
+                return (
+                  <React.Fragment key={ambiente}>
+                    {hasFBD && <li>FR_{basicInfo.cdpsp}_FBD_{ambCode}.xlsx</li>}
+                    {hasFDA && <li>FR_{basicInfo.cdpsp}_FDA_{ambCode}.xlsx</li>}
+                    {hasPU && <li>{basicInfo.cdpsp}_PU_{ambCode}.docx</li>}
+                  </React.Fragment>
+                );
+              })}
+            </ul>
           </div>
         </div>
       </Card>
