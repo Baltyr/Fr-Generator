@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/stores/toastStore';
 import { excelService } from '@/services/excelService';
 import { wordService } from '@/services/wordService';
-import { saveAs } from 'file-saver';
-import { writeBinaryFile, createDir } from '@tauri-apps/api/fs';
+import { writeBinaryFile, createDir, BaseDirectory } from '@tauri-apps/api/fs';
 import { downloadDir } from '@tauri-apps/api/path';
 import { StorageService } from '@/services/storageService';
 import { HistorialFR } from '@/types/config.types';
 
-export const Step5Summary: React.FC = () => {
-  const { formData } = useWizardStore();
+interface Step5SummaryProps {
+  onComplete?: () => void;
+}
+
+export const Step5Summary: React.FC<Step5SummaryProps> = ({ onComplete }) => {
+  const { formData, resetWizard } = useWizardStore();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async () => {
@@ -29,36 +32,49 @@ export const Step5Summary: React.FC = () => {
       const cdpsp = basicInfo.cdpsp;
       const epica = basicInfo.epica;
 
-      // Obtener la carpeta de descargas
-      const downloadsPath = await downloadDir();
+      // Usar la carpeta de Descargas con BaseDirectory para evitar problemas de permisos
+      // Estructura: Downloads/FR-Manager/Épica/FR_CDPSP/
+      let relativePath: string;
 
-      // Crear estructura de carpetas: Épica/FR_CDPSP/ o solo FR_CDPSP/
-      let basePath: string;
       if (epica && epica.trim() !== '') {
-        // Limpiar nombre de épica para usar como carpeta
         const epicaFolder = epica.replace(/[<>:"/\\|?*]/g, '_');
-        basePath = `${downloadsPath}${epicaFolder}\\FR_${cdpsp}`;
+        relativePath = `FR-Manager/${epicaFolder}/FR_${cdpsp}`;
       } else {
-        basePath = `${downloadsPath}FR_${cdpsp}`;
+        relativePath = `FR-Manager/Sin-Epica/FR_${cdpsp}`;
       }
 
-      // Crear las carpetas
+      // Obtener la ruta completa para mostrar al usuario
+      const downloadsPath = await downloadDir();
+      const fullPath = `${downloadsPath}${relativePath}`;
+
+      // Crear las carpetas usando BaseDirectory.Download
+      console.log('Creando carpeta en Descargas:', fullPath);
       try {
-        await createDir(basePath, { recursive: true });
+        await createDir(relativePath, { dir: BaseDirectory.Download, recursive: true });
+        console.log('Carpeta creada exitosamente');
       } catch (error) {
         console.error('Error creando carpetas:', error);
-        // Si falla crear carpetas, usar saveAs como fallback
-        toast.warning('No se pudo crear la estructura de carpetas', 'Los archivos se descargarán normalmente');
-        await generateWithSaveAs();
+        toast.error('Error', 'No se pudo crear la estructura de carpetas. Verifica los permisos.');
+        setIsGenerating(false);
         return;
       }
+
+      // Verificar qué datos tenemos
+      console.log('Datos disponibles:', {
+        hasFBD: fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0),
+        hasFDA: fda && fda.archivos?.length > 0,
+        hasPU: pu && pu.casos?.length > 0,
+        ambientes: basicInfo.ambientes
+      });
 
       // Generar archivos para cada ambiente seleccionado
       for (const ambiente of basicInfo.ambientes) {
         const ambienteCode = ambiente === 'QA' ? 'QA' : 'PRD';
+        console.log(`Generando archivos para ambiente: ${ambiente}`);
 
         // Generar FBD si tiene datos
         if (fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0)) {
+          console.log('Generando FBD...');
           try {
             const fbdBlob = await excelService.generateFBD(
               fbd,
@@ -67,14 +83,16 @@ export const Step5Summary: React.FC = () => {
               basicInfo
             );
             const filename = `FR_${cdpsp}_FBD_${ambienteCode}.xlsx`;
-            const filePath = `${basePath}\\${filename}`;
+            const relativeFilePath = `${relativePath}/${filename}`;
 
+            console.log('Guardando FBD en:', relativeFilePath);
             // Convertir Blob a ArrayBuffer
             const arrayBuffer = await fbdBlob.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
 
-            await writeBinaryFile(filePath, uint8Array);
+            await writeBinaryFile(relativeFilePath, uint8Array, { dir: BaseDirectory.Download });
             filesGenerated.push(filename);
+            console.log('FBD generado exitosamente');
           } catch (error) {
             console.error('Error generando FBD:', error);
             toast.error(
@@ -86,6 +104,7 @@ export const Step5Summary: React.FC = () => {
 
         // Generar FDA si tiene datos
         if (fda && fda.archivos?.length > 0) {
+          console.log('Generando FDA...');
           try {
             const fdaBlob = await excelService.generateFDA(
               fda,
@@ -94,13 +113,15 @@ export const Step5Summary: React.FC = () => {
               basicInfo
             );
             const filename = `FR_${cdpsp}_FDA_${ambienteCode}.xlsx`;
-            const filePath = `${basePath}\\${filename}`;
+            const relativeFilePath = `${relativePath}/${filename}`;
 
+            console.log('Guardando FDA en:', relativeFilePath);
             const arrayBuffer = await fdaBlob.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
 
-            await writeBinaryFile(filePath, uint8Array);
+            await writeBinaryFile(relativeFilePath, uint8Array, { dir: BaseDirectory.Download });
             filesGenerated.push(filename);
+            console.log('FDA generado exitosamente');
           } catch (error) {
             console.error('Error generando FDA:', error);
             toast.error(
@@ -112,6 +133,7 @@ export const Step5Summary: React.FC = () => {
 
         // Generar PU si tiene datos
         if (pu && pu.casos?.length > 0) {
+          console.log('Generando PU...');
           try {
             const puBlob = await wordService.generatePU(
               pu,
@@ -120,13 +142,15 @@ export const Step5Summary: React.FC = () => {
               basicInfo
             );
             const filename = `${cdpsp}_PU_${ambienteCode}.docx`;
-            const filePath = `${basePath}\\${filename}`;
+            const relativeFilePath = `${relativePath}/${filename}`;
 
+            console.log('Guardando PU en:', relativeFilePath);
             const arrayBuffer = await puBlob.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
 
-            await writeBinaryFile(filePath, uint8Array);
+            await writeBinaryFile(relativeFilePath, uint8Array, { dir: BaseDirectory.Download });
             filesGenerated.push(filename);
+            console.log('PU generado exitosamente');
           } catch (error) {
             console.error('Error generando PU:', error);
             toast.error(
@@ -136,6 +160,8 @@ export const Step5Summary: React.FC = () => {
           }
         }
       }
+
+      console.log('Archivos generados:', filesGenerated);
 
       // Guardar en historial
       if (filesGenerated.length > 0) {
@@ -147,7 +173,7 @@ export const Step5Summary: React.FC = () => {
           ambientes: basicInfo.ambientes,
           tiposFR: [],
           archivosGenerados: filesGenerated,
-          rutaCarpeta: basePath,
+          rutaCarpeta: fullPath,
         };
 
         if (fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0)) {
@@ -161,9 +187,17 @@ export const Step5Summary: React.FC = () => {
 
         toast.success(
           `¡Archivos generados! (${filesGenerated.length})`,
-          `Guardados en: ${basePath}`,
+          `Guardados en: ${fullPath}`,
           8000
         );
+
+        // Resetear wizard y redirigir al home
+        setTimeout(() => {
+          resetWizard();
+          if (onComplete) {
+            onComplete();
+          }
+        }, 2000); // Esperar 2 segundos para que el usuario vea el mensaje de éxito
       } else {
         toast.warning(
           'No se generaron archivos',
@@ -178,48 +212,6 @@ export const Step5Summary: React.FC = () => {
       );
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  // Función de fallback usando saveAs tradicional
-  const generateWithSaveAs = async () => {
-    if (!formData.basicInfo) return;
-
-    const filesGenerated: string[] = [];
-    const { basicInfo, fbd, fda, pu } = formData;
-    const cdpsp = basicInfo.cdpsp;
-
-    for (const ambiente of basicInfo.ambientes) {
-      const ambienteCode = ambiente === 'QA' ? 'QA' : 'PRD';
-
-      if (fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0)) {
-        const fbdBlob = await excelService.generateFBD(fbd, ambiente, cdpsp, basicInfo);
-        const filename = `FR_${cdpsp}_FBD_${ambienteCode}.xlsx`;
-        saveAs(fbdBlob, filename);
-        filesGenerated.push(filename);
-      }
-
-      if (fda && fda.archivos?.length > 0) {
-        const fdaBlob = await excelService.generateFDA(fda, ambiente, cdpsp, basicInfo);
-        const filename = `FR_${cdpsp}_FDA_${ambienteCode}.xlsx`;
-        saveAs(fdaBlob, filename);
-        filesGenerated.push(filename);
-      }
-
-      if (pu && pu.casos?.length > 0) {
-        const puBlob = await wordService.generatePU(pu, ambiente, cdpsp, basicInfo);
-        const filename = `${cdpsp}_PU_${ambienteCode}.docx`;
-        saveAs(puBlob, filename);
-        filesGenerated.push(filename);
-      }
-    }
-
-    if (filesGenerated.length > 0) {
-      toast.success(
-        `¡Archivos generados! (${filesGenerated.length})`,
-        `Se descargaron: ${filesGenerated.join(', ')}`,
-        8000
-      );
     }
   };
 
@@ -463,7 +455,7 @@ export const Step5Summary: React.FC = () => {
             </h3>
             <p className="text-sm text-text-secondary">
               Se generarán los archivos Excel (FBD, FDA) y Word (PU) con la información ingresada.
-              Los archivos se descargarán automáticamente en tu carpeta de Descargas.
+              Los archivos se guardarán en tu carpeta de Descargas dentro de FR-Manager.
             </p>
           </div>
           <Button

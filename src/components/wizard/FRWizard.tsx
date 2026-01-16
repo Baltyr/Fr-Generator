@@ -25,7 +25,7 @@ export const FRWizard: React.FC<FRWizardProps> = ({ onClose }) => {
       case 4:
         return <Step4PU />;
       case 5:
-        return <Step5Summary />;
+        return <Step5Summary onComplete={onClose} />;
       default:
         return <Step1BasicInfo />;
     }
