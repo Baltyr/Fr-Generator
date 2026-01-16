@@ -3,6 +3,7 @@ import { Ambiente, TipoFR, FBDData, FDAData, PUData } from '@/types';
 
 interface BasicInfo {
   cdpsp: string;
+  epica?: string; // Épica para clasificar la FR
   titulo: string;
   descripcion: string;
   solicitante: string;

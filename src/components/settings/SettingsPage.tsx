@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TemplatesConfig } from './TemplatesConfig';
 import { UserDataConfig } from './UserDataConfig';
+import { ConfigExportImport } from './ConfigExportImport';
 
 type SettingsTab = 'templates' | 'userdata' | 'advanced';
 
@@ -51,13 +52,7 @@ export const SettingsPage: React.FC = () => {
         <div className="transition-opacity duration-200">
           {activeTab === 'templates' && <TemplatesConfig />}
           {activeTab === 'userdata' && <UserDataConfig />}
-          {activeTab === 'advanced' && (
-            <div className="text-center py-12">
-              <p className="text-text-muted">
-                Opciones avanzadas próximamente...
-              </p>
-            </div>
-          )}
+          {activeTab === 'advanced' && <ConfigExportImport />}
         </div>
       </div>
     </div>

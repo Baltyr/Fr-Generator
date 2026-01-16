@@ -6,6 +6,10 @@ import { toast } from '@/stores/toastStore';
 import { excelService } from '@/services/excelService';
 import { wordService } from '@/services/wordService';
 import { saveAs } from 'file-saver';
+import { writeBinaryFile, createDir } from '@tauri-apps/api/fs';
+import { downloadDir } from '@tauri-apps/api/path';
+import { StorageService } from '@/services/storageService';
+import { HistorialFR } from '@/types/config.types';
 
 export const Step5Summary: React.FC = () => {
   const { formData } = useWizardStore();
@@ -23,6 +27,31 @@ export const Step5Summary: React.FC = () => {
     try {
       const { basicInfo, fbd, fda, pu } = formData;
       const cdpsp = basicInfo.cdpsp;
+      const epica = basicInfo.epica;
+
+      // Obtener la carpeta de descargas
+      const downloadsPath = await downloadDir();
+
+      // Crear estructura de carpetas: Épica/FR_CDPSP/ o solo FR_CDPSP/
+      let basePath: string;
+      if (epica && epica.trim() !== '') {
+        // Limpiar nombre de épica para usar como carpeta
+        const epicaFolder = epica.replace(/[<>:"/\\|?*]/g, '_');
+        basePath = `${downloadsPath}${epicaFolder}\\FR_${cdpsp}`;
+      } else {
+        basePath = `${downloadsPath}FR_${cdpsp}`;
+      }
+
+      // Crear las carpetas
+      try {
+        await createDir(basePath, { recursive: true });
+      } catch (error) {
+        console.error('Error creando carpetas:', error);
+        // Si falla crear carpetas, usar saveAs como fallback
+        toast.warning('No se pudo crear la estructura de carpetas', 'Los archivos se descargarán normalmente');
+        await generateWithSaveAs();
+        return;
+      }
 
       // Generar archivos para cada ambiente seleccionado
       for (const ambiente of basicInfo.ambientes) {
@@ -38,7 +67,13 @@ export const Step5Summary: React.FC = () => {
               basicInfo
             );
             const filename = `FR_${cdpsp}_FBD_${ambienteCode}.xlsx`;
-            saveAs(fbdBlob, filename);
+            const filePath = `${basePath}\\${filename}`;
+
+            // Convertir Blob a ArrayBuffer
+            const arrayBuffer = await fbdBlob.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            await writeBinaryFile(filePath, uint8Array);
             filesGenerated.push(filename);
           } catch (error) {
             console.error('Error generando FBD:', error);
@@ -59,7 +94,12 @@ export const Step5Summary: React.FC = () => {
               basicInfo
             );
             const filename = `FR_${cdpsp}_FDA_${ambienteCode}.xlsx`;
-            saveAs(fdaBlob, filename);
+            const filePath = `${basePath}\\${filename}`;
+
+            const arrayBuffer = await fdaBlob.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            await writeBinaryFile(filePath, uint8Array);
             filesGenerated.push(filename);
           } catch (error) {
             console.error('Error generando FDA:', error);
@@ -80,7 +120,12 @@ export const Step5Summary: React.FC = () => {
               basicInfo
             );
             const filename = `${cdpsp}_PU_${ambienteCode}.docx`;
-            saveAs(puBlob, filename);
+            const filePath = `${basePath}\\${filename}`;
+
+            const arrayBuffer = await puBlob.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            await writeBinaryFile(filePath, uint8Array);
             filesGenerated.push(filename);
           } catch (error) {
             console.error('Error generando PU:', error);
@@ -92,11 +137,31 @@ export const Step5Summary: React.FC = () => {
         }
       }
 
-      // Mostrar resultado
+      // Guardar en historial
       if (filesGenerated.length > 0) {
+        const historialEntry: HistorialFR = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          cdpsp,
+          epica: epica || undefined,
+          fechaCreacion: new Date(),
+          ambientes: basicInfo.ambientes,
+          tiposFR: [],
+          archivosGenerados: filesGenerated,
+          rutaCarpeta: basePath,
+        };
+
+        if (fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0)) {
+          historialEntry.tiposFR.push('FBD');
+        }
+        if (fda && fda.archivos?.length > 0) {
+          historialEntry.tiposFR.push('FDA');
+        }
+
+        await StorageService.addToHistory(historialEntry);
+
         toast.success(
           `¡Archivos generados! (${filesGenerated.length})`,
-          `Se descargaron: ${filesGenerated.join(', ')}`,
+          `Guardados en: ${basePath}`,
           8000
         );
       } else {
@@ -113,6 +178,48 @@ export const Step5Summary: React.FC = () => {
       );
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Función de fallback usando saveAs tradicional
+  const generateWithSaveAs = async () => {
+    if (!formData.basicInfo) return;
+
+    const filesGenerated: string[] = [];
+    const { basicInfo, fbd, fda, pu } = formData;
+    const cdpsp = basicInfo.cdpsp;
+
+    for (const ambiente of basicInfo.ambientes) {
+      const ambienteCode = ambiente === 'QA' ? 'QA' : 'PRD';
+
+      if (fbd && (fbd.scripts?.length > 0 || fbd.storedProcedures?.length > 0)) {
+        const fbdBlob = await excelService.generateFBD(fbd, ambiente, cdpsp, basicInfo);
+        const filename = `FR_${cdpsp}_FBD_${ambienteCode}.xlsx`;
+        saveAs(fbdBlob, filename);
+        filesGenerated.push(filename);
+      }
+
+      if (fda && fda.archivos?.length > 0) {
+        const fdaBlob = await excelService.generateFDA(fda, ambiente, cdpsp, basicInfo);
+        const filename = `FR_${cdpsp}_FDA_${ambienteCode}.xlsx`;
+        saveAs(fdaBlob, filename);
+        filesGenerated.push(filename);
+      }
+
+      if (pu && pu.casos?.length > 0) {
+        const puBlob = await wordService.generatePU(pu, ambiente, cdpsp, basicInfo);
+        const filename = `${cdpsp}_PU_${ambienteCode}.docx`;
+        saveAs(puBlob, filename);
+        filesGenerated.push(filename);
+      }
+    }
+
+    if (filesGenerated.length > 0) {
+      toast.success(
+        `¡Archivos generados! (${filesGenerated.length})`,
+        `Se descargaron: ${filesGenerated.join(', ')}`,
+        8000
+      );
     }
   };
 

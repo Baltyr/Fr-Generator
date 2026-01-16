@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import { ConfiguracionGuardada, HistorialFR, DEFAULT_CONFIG } from '@/types';
+import { ConfiguracionGuardada, HistorialFR, Epica, DEFAULT_CONFIG } from '@/types';
 
 // Configurar localforage para usar IndexedDB
 localforage.config({
@@ -12,6 +12,7 @@ localforage.config({
 const STORAGE_KEYS = {
   CONFIG: 'app_configuration',
   HISTORY: 'fr_history',
+  EPICAS: 'epicas',
   TEMPLATES: {
     FBD: 'template_fbd',
     FDA: 'template_fda',
@@ -351,6 +352,90 @@ export class StorageService {
 
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
+  }
+
+  // ============================================
+  // Épicas
+  // ============================================
+
+  /**
+   * Obtiene todas las épicas
+   */
+  static async getEpicas(): Promise<Epica[]> {
+    try {
+      const epicas = await localforage.getItem<Epica[]>(STORAGE_KEYS.EPICAS);
+      if (!epicas) {
+        return [];
+      }
+      // Convertir strings de fecha a objetos Date
+      return epicas.map(epica => ({
+        ...epica,
+        createdAt: new Date(epica.createdAt),
+      }));
+    } catch (error) {
+      console.error('Error al obtener épicas:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Crea o actualiza una épica
+   */
+  static async saveEpica(epica: Omit<Epica, 'id' | 'createdAt'> | Epica): Promise<Epica> {
+    try {
+      const epicas = await this.getEpicas();
+
+      // Si tiene ID, actualizar
+      if ('id' in epica && epica.id) {
+        const index = epicas.findIndex(e => e.id === epica.id);
+        if (index !== -1) {
+          epicas[index] = { ...epica, createdAt: epicas[index].createdAt };
+          await localforage.setItem(STORAGE_KEYS.EPICAS, epicas);
+          return epicas[index];
+        }
+      }
+
+      // Si no tiene ID, crear nueva
+      const nuevaEpica: Epica = {
+        ...epica,
+        id: this.generateId(),
+        createdAt: new Date(),
+      };
+
+      epicas.push(nuevaEpica);
+      await localforage.setItem(STORAGE_KEYS.EPICAS, epicas);
+      return nuevaEpica;
+    } catch (error) {
+      console.error('Error al guardar épica:', error);
+      throw new Error('No se pudo guardar la épica');
+    }
+  }
+
+  /**
+   * Elimina una épica
+   */
+  static async deleteEpica(id: string): Promise<void> {
+    try {
+      const epicas = await this.getEpicas();
+      const filtered = epicas.filter(e => e.id !== id);
+      await localforage.setItem(STORAGE_KEYS.EPICAS, filtered);
+    } catch (error) {
+      console.error('Error al eliminar épica:', error);
+      throw new Error('No se pudo eliminar la épica');
+    }
+  }
+
+  /**
+   * Obtiene una épica por nombre
+   */
+  static async getEpicaByName(nombre: string): Promise<Epica | null> {
+    try {
+      const epicas = await this.getEpicas();
+      return epicas.find(e => e.nombre.toLowerCase() === nombre.toLowerCase()) || null;
+    } catch (error) {
+      console.error('Error al buscar épica:', error);
+      return null;
+    }
   }
 
   /**

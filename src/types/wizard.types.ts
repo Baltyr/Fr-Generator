@@ -5,6 +5,7 @@ import { Ambiente, TipoFR, FBDData, FDAData, PUData } from './fr.types';
  */
 export interface DatosBasicos {
   cdpsp: string;
+  epica?: string; // Nombre de la épica para clasificar
   ambientes: Ambiente[];
   tiposFR: TipoFR[];
   solicitante: {
@@ -25,6 +26,7 @@ export interface WizardState {
   formData: {
     // Paso 1: Información básica
     cdpsp: string;
+    epica?: string; // Nombre de la épica
     ambientes: Ambiente[];
     tiposFR: TipoFR[];
     solicitante: {

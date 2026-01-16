@@ -74,11 +74,24 @@ export interface ConfiguracionGuardada {
 }
 
 /**
+ * Épica para clasificar FRs (similar a Jira)
+ */
+export interface Epica {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  color?: string;
+  createdAt: Date;
+}
+
+/**
  * Historial de FRs generadas
  */
 export interface HistorialFR {
   id: string;
   cdpsp: string;
+  epica?: string; // Nombre de la épica
+  epicaId?: string; // ID de la épica
   fechaCreacion: Date;
   ambientes: ('QA' | 'PROD')[];
   tiposFR: ('FBD' | 'FDA')[];

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useWizardStore } from '@/stores/wizardStore';
 import { useConfigStore } from '@/stores/configStore';
+import { StorageService } from '@/services/storageService';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { Epica } from '@/types/config.types';
 
 export const Step1BasicInfo: React.FC = () => {
   const { formData, updateBasicInfo } = useWizardStore();
@@ -11,6 +13,7 @@ export const Step1BasicInfo: React.FC = () => {
 
   const [localData, setLocalData] = useState({
     cdpsp: formData.basicInfo?.cdpsp || '',
+    epica: formData.basicInfo?.epica || '',
     titulo: formData.basicInfo?.titulo || '',
     descripcion: formData.basicInfo?.descripcion || '',
     solicitante: formData.basicInfo?.solicitante || config?.solicitante.nombre.valor || '',
@@ -20,7 +23,19 @@ export const Step1BasicInfo: React.FC = () => {
     fechaSolicitud: formData.basicInfo?.fechaSolicitud || new Date().toISOString().split('T')[0],
   });
 
+  const [epicas, setEpicas] = useState<Epica[]>([]);
+  const [showEpicaInput, setShowEpicaInput] = useState(false);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Cargar épicas al montar
+  useEffect(() => {
+    const loadEpicas = async () => {
+      const epicasData = await StorageService.getEpicas();
+      setEpicas(epicasData);
+    };
+    loadEpicas();
+  }, []);
 
   // Auto-save to store on changes
   useEffect(() => {
@@ -74,6 +89,22 @@ export const Step1BasicInfo: React.FC = () => {
     });
   };
 
+  const handleCreateEpica = async (nombre: string) => {
+    if (!nombre.trim()) return;
+
+    try {
+      const nuevaEpica = await StorageService.saveEpica({
+        nombre: nombre.trim(),
+        color: '#8B5CF6', // Purple por defecto
+      });
+      setEpicas(prev => [...prev, nuevaEpica]);
+      setLocalData(prev => ({ ...prev, epica: nuevaEpica.nombre }));
+      setShowEpicaInput(false);
+    } catch (error) {
+      console.error('Error al crear épica:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -103,6 +134,61 @@ export const Step1BasicInfo: React.FC = () => {
             helperText="Código único del requerimiento (ej: CDP-2024-001)"
             required
           />
+
+          {/* Campo de Épica */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Épica
+              <span className="text-text-muted ml-2 text-xs">(Opcional)</span>
+            </label>
+            <div className="space-y-2">
+              {!showEpicaInput ? (
+                <div className="flex gap-2">
+                  <select
+                    className="flex-1 px-4 py-2.5 bg-bg-card border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-purple focus:border-accent-purple transition-all"
+                    value={localData.epica || ''}
+                    onChange={(e) => handleChange('epica', e.target.value)}
+                  >
+                    <option value="">Sin épica</option>
+                    {epicas.map(ep => (
+                      <option key={ep.id} value={ep.nombre}>
+                        {ep.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowEpicaInput(true)}
+                    className="px-4 py-2 bg-accent-purple hover:bg-accent-purple/90 text-white rounded-lg font-medium transition-colors"
+                  >
+                    + Nueva
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Nombre de la nueva épica"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCreateEpica((e.target as HTMLInputElement).value);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEpicaInput(false)}
+                    className="px-4 py-2 bg-bg-secondary hover:bg-bg-secondary/80 text-text-primary rounded-lg font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="mt-1.5 text-xs text-text-muted">
+              Clasifica este FR en una épica (similar a Jira) para mejor organización
+            </p>
+          </div>
 
           <Input
             label="Título del requerimiento"

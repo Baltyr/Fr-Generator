@@ -3,13 +3,15 @@ import { useConfigStore } from '@/stores/configStore';
 import { FirstRunSetup } from '@/components/settings/FirstRunSetup';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 import { FRWizard } from '@/components/wizard/FRWizard';
+import { HistoryPage } from '@/components/history/HistoryPage';
+import { HomePage } from '@/components/home/HomePage';
 import { Button } from '@/components/ui/Button';
 import { ToastContainer } from '@/components/ui/Toast';
 
 type AppPage = 'home' | 'settings' | 'wizard' | 'history';
 
 function App() {
-  const { config, isLoading, isFirstRun, loadConfig } = useConfigStore();
+  const { isLoading, isFirstRun, loadConfig } = useConfigStore();
   const [currentPage, setCurrentPage] = useState<AppPage>('home');
   const [showFirstRunSetup, setShowFirstRunSetup] = useState(false);
 
@@ -55,6 +57,22 @@ function App() {
     );
   }
 
+  // Show History page
+  if (currentPage === 'history') {
+    return (
+      <>
+        <HistoryPage />
+        <Button
+          variant="ghost"
+          className="fixed bottom-6 left-6"
+          onClick={() => setCurrentPage('home')}
+        >
+          ← Volver al inicio
+        </Button>
+      </>
+    );
+  }
+
   // Home page
   return (
     <>
@@ -82,9 +100,8 @@ function App() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentPage('history')}
-                disabled
               >
-                📋 Historial
+                📜 Historial
               </Button>
               <Button
                 variant="ghost"
@@ -97,63 +114,8 @@ function App() {
           </div>
         </header>
 
-        {/* Main Content */}
-        <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 73px)' }}>
-          <div className="text-center max-w-2xl px-4">
-            <div className="text-6xl mb-6">🚀</div>
-            <h2 className="text-4xl font-bold text-text-primary mb-4">
-              FR Generator
-            </h2>
-            <p className="text-text-secondary text-lg mb-8">
-              Generador automático de archivos FR para Jira
-            </p>
-
-            {config && (
-              <div className="bg-bg-card border border-border rounded-lg p-6 text-left mb-8">
-                <h3 className="text-lg font-semibold mb-3 text-accent-purple">
-                  ✅ Sistema inicializado correctamente
-                </h3>
-                <ul className="space-y-2 text-sm text-text-secondary">
-                  <li>• Storage Service (IndexedDB)</li>
-                  <li>• Configuración Zustand Store</li>
-                  <li>• Wizard State Management</li>
-                  <li>• Sistema de templates</li>
-                  <li>• Historial de FRs</li>
-                  <li>• Componentes UI base</li>
-                  <li>• Páginas de configuración</li>
-                </ul>
-                <p className="text-xs text-text-muted mt-4">
-                  Config ID: {config.id.slice(0, 12)}...
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => setCurrentPage('wizard')}
-                className="w-full"
-              >
-                ➕ Crear nuevo FR
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => setCurrentPage('settings')}
-                className="w-full"
-              >
-                ⚙️ Ir a Configuración
-              </Button>
-            </div>
-
-            <div className="mt-8 p-4 bg-bg-primary border border-border rounded-lg">
-              <p className="text-xs text-text-muted">
-                💡 <strong>Siguiente paso:</strong> Configurar templates y datos personales en la sección de Configuración
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Main Content - HomePage Component */}
+        <HomePage />
       </div>
 
       {/* First Run Setup Modal */}

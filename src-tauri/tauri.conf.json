@@ -47,6 +47,10 @@
         "depends": []
       },
       "externalBin": [],
+      "icon": [
+        "icons/icon.ico",
+        "icons/icon.png"
+      ],
       "identifier": "com.bupa.fr-generator",
       "longDescription": "Aplicación de escritorio para generar automáticamente archivos FR (FBD, FDA, PU) para solicitudes de pases a QA y Producción en Jira.",
       "macOS": {
